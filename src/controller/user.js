@@ -7,8 +7,6 @@ import {
   generateRefreshToken,
 } from "../utils/token-generator.js";
 
-
-
 const SIGN_UP = async (req, res) => {
   try {
     const existingUser = await UserModel.findOne({ email: req.body.email });
@@ -32,9 +30,6 @@ const SIGN_UP = async (req, res) => {
 
     const jwtToken = generateAccessToken(user);
     const jwtRefreshToken = generateRefreshToken(user);
-
-    user.jwtRefreshToken = jwtRefreshToken;
-    await user.save();
 
     return res.status(201).json({
       message: "User registered successfully.",
@@ -77,9 +72,6 @@ const LOGIN = async (req, res) => {
     const jwtToken = generateAccessToken(user);
     const jwtRefreshToken = generateRefreshToken(user);
 
-    user.jwtRefreshToken = jwtRefreshToken;
-    await user.save();
-
     return res.status(200).json({
       message: "Login was successfull",
       jwtToken: jwtToken,
@@ -93,7 +85,8 @@ const LOGIN = async (req, res) => {
 
 const GET_NEW_JWT_TOKENS = async (req, res) => {
   try {
-    const jwtRefreshToken = req.body.jwtRefreshToken;
+    // const jwtRefreshToken = req.body.jwtRefreshToken;
+    const jwtRefreshToken = req.headers["x-refresh-token"];
     if (!jwtRefreshToken) {
       return res.status(401).json({
         message: "Auth failed. No refresh token provided",
@@ -106,7 +99,7 @@ const GET_NEW_JWT_TOKENS = async (req, res) => {
     );
 
     const user = await UserModel.findOne({ id: decodedToken.userId });
-    if (!user || user.jwtRefreshToken !== jwtRefreshToken) {
+    if (!user) {
       return res.status(401).json({
         message: "Auth failed: Please log in again.",
       });
@@ -114,9 +107,6 @@ const GET_NEW_JWT_TOKENS = async (req, res) => {
 
     const newJwtToken = generateAccessToken(user);
     const newRefreshToken = generateRefreshToken(user);
-
-    user.jwtRefreshToken = newRefreshToken;
-    await user.save();
 
     return res.status(200).json({
       jwtToken: newJwtToken,
@@ -163,7 +153,7 @@ const GET_ALL_USERS = async (req, res) => {
   try {
     const users = await UserModel.find()
       .sort({ name: 1 })
-      .select("-password -jwtRefreshToken");
+      .select("-password");
 
     if (!users.length) {
       return res.status(404).json({ message: "No users found." });
@@ -185,7 +175,7 @@ const GET_USER_BY_ID = async (req, res) => {
       return res.status(403).json({ message: "Access denied" });
     }
     const user = await UserModel.findOne({ id: requestedUserId }).select(
-      "-password -jwtRefreshToken"
+      "-password"
     );
 
     if (!user)
@@ -232,7 +222,6 @@ const GET_USER_BY_ID_WITH_TICKETS = async (req, res) => {
       },
     ]);
 
-  
     if (userWithTickets.length === 0) {
       return res.status(404).json({ message: "User not found" });
     }

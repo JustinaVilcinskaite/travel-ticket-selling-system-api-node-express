@@ -12,14 +12,15 @@ import {
 
 import authUser from "../middleware/authentication.js";
 import validate from "../middleware/validation.js";
-import userSchema from "../schema/user.js";
+import userSchema from "../schema/register.js";
+import loginSchema from "../schema/login.js";
 
 // import authorizeUser from "../middleware/authorization.js";
 
 const router = express.Router();
 
 router.post("/users", validate(userSchema), SIGN_UP);
-router.post("/login", LOGIN);
+router.post("/login", validate(loginSchema), LOGIN);
 router.post("/tokens/refresh", GET_NEW_JWT_TOKENS);
 
 router.get("/users", authUser, GET_ALL_USERS);

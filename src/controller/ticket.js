@@ -11,10 +11,6 @@ const BUY_TICKET = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    if (user.moneyBalance < req.body.ticketPrice) {
-      return res.status(422).json({ message: "Insufficient money balance" });
-    }
-
     const ticket = new TicketModel({
       id: uuidv4(),
       title: req.body.title,
@@ -27,20 +23,13 @@ const BUY_TICKET = async (req, res) => {
 
     await ticket.save();
 
-    // user.boughtTickets.push(ticket.id);
-    // user.moneyBalance = user.moneyBalance - req.body.ticketPrice;
+    if (user.moneyBalance < ticket.ticketPrice) {
+      return res.status(422).json({ message: "Insufficient money balance" });
+    }
 
-    // await user.save();
-
-    
-    await UserModel.updateOne(
-      { id: userId },
-      {
-        $inc: { moneyBalance: -req.body.ticketPrice },
-        $push: { boughtTickets: ticket.id },
-      },
-      { new: true }
-    );
+    user.moneyBalance -= ticket.ticketPrice;
+    user.boughtTickets.push(ticket.id);
+    await user.save();
 
     res.status(201).json({
       message: "Ticket purchased successfully",

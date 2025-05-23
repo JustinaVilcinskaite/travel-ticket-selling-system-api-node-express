@@ -12,7 +12,6 @@ const userSchema = mongoose.Schema({
   password: { type: String, required: true },
   moneyBalance: { type: Number, required: true },
   boughtTickets: { type: Array, required: true },
-  jwtRefreshToken: { type: String },
 });
 
 export default mongoose.model("User", userSchema);
